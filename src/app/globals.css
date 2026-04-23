@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Dark brand palette ── */
+  --color-bg-base:      #121416;   /* true base — every page bg */
+  --color-bg-nav:       #0e1012;   /* nav bars, sticky bars */
+  --color-bg-card:      #1c1f22;   /* cards, panels */
+  --color-bg-card-2:    #21252a;   /* nested cards */
+  --color-bg-input:     #191c1f;   /* inputs, search fields */
+  --color-bg-hover:     #262b30;   /* hover states */
+  --color-border:       #242830;   /* default border */
+  --color-border-focus: #353c45;   /* focused / highlighted border */
+
+  /* Amber / Gold primary */
+  --color-amber-300: #fcd34d;
+  --color-amber-400: #E9C349;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+  --color-brand:       #D4A017;
+  --color-brand-light: #F5C842;
+
+  /* Teal accent */
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+
+  /* Status */
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #10b981;
+  --color-red-400:     #f87171;
+  --color-red-500:     #ef4444;
+  --color-yellow-400:  #facc15;
+
+  /* Text */
+  --color-text-primary:   #ffffff;
+  --color-text-secondary: #a3a3a3;
+  --color-text-muted:     #6b6b6b;
+  --color-text-amber:     #D4A017;
+
+  /* Typography */
+  --font-sans:  var(--font-manrope), system-ui, sans-serif;
+  --font-serif: var(--font-noto-serif), Georgia, serif;
+
+  /* Border radius */
+  --radius-sm:   0.5rem;
+  --radius-md:   0.75rem;
+  --radius-lg:   1rem;
+  --radius-xl:   1.25rem;
+  --radius-full: 9999px;
+}
+
+/* ── Base resets ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+html[data-scroll-behavior="smooth"] {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #121416;
+  color: #ffffff;
+  min-height: 100vh;
+  line-height: 1.6;
+  font-family: var(--font-manrope), system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* ── Global heading defaults ── */
+h1, h2 {
+  font-family: var(--font-noto-serif), Georgia, serif;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+h3, h4, h5, h6 {
+  font-family: var(--font-manrope), system-ui, sans-serif;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* ── Scrollbar hide ── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* ── Tap highlight removal ── */
+button, a { -webkit-tap-highlight-color: transparent; }
+
+/* ── WhatsApp green ── */
+.bg-whatsapp { background-color: #25D366; }
+
+/* ── Line clamps ── */
+.line-clamp-1 {
+  display: -webkit-box; -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+.line-clamp-2 {
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+.line-clamp-3 {
+  display: -webkit-box; -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* ── Safe area for bottom nav on iOS ── */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 1rem); }
