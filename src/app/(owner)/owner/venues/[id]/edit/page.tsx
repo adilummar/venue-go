@@ -51,6 +51,7 @@ export default async function VenueEditPage({ params }: PageProps) {
             seatingCapacity: venue.seatingCapacity,
             pricePerEvening: venue.pricePerEvening,
             status: venue.status,
+            heroImageUrl: venue.heroImageUrl,
           }}
           ownerWhatsapp={owner?.whatsapp}
           selectedAmenityIds={amenityIds}

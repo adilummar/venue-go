@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, CheckCircle, Phone } from "lucide-react";
 import { AMENITIES } from "@/lib/constants";
@@ -17,6 +17,7 @@ interface VenueEditFormProps {
     seatingCapacity: number;
     pricePerEvening: string;
     status: string;
+    heroImageUrl?: string | null;
   };
   ownerWhatsapp?: string | null;
   selectedAmenityIds: number[];
@@ -24,7 +25,9 @@ interface VenueEditFormProps {
 
 export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds }: VenueEditFormProps) {
   const router = useRouter();
+  const heroFileRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [amenities, setAmenities] = useState<number[]>(selectedAmenityIds);
@@ -38,7 +41,35 @@ export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds }: Venu
     seatingCapacity: String(venue.seatingCapacity),
     pricePerEvening: venue.pricePerEvening,
     whatsapp: ownerWhatsapp ?? "",
+    heroImageUrl: venue.heroImageUrl ?? "",
   });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+
+      setForm((f) => ({ ...f, heroImageUrl: data.data.url }));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const update = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
   const toggleAmenity = (id: number) =>
@@ -64,6 +95,7 @@ export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds }: Venu
           seatingCapacity: Number(form.seatingCapacity),
           pricePerEvening: Number(form.pricePerEvening),
           whatsapp: form.whatsapp || undefined,
+          heroImageUrl: form.heroImageUrl || undefined,
           amenityIds: amenities,
           status,
         }),
@@ -109,9 +141,43 @@ export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds }: Venu
         </div>
       </section>
 
+      {/* Gallery */}
+      <section>
+        <p className="text-amber-400 font-bold text-xs uppercase tracking-widest mb-3">02 GALLERY & VISUALS</p>
+        <button
+          type="button"
+          onClick={() => heroFileRef.current?.click()}
+          disabled={uploadingImage}
+          className="w-full bg-[#1a1a1a] border border-dashed border-[#2a2a2a] rounded-2xl py-10 flex flex-col items-center gap-2 cursor-pointer hover:border-[#3a3a3a] transition-colors relative overflow-hidden"
+        >
+          {form.heroImageUrl && (
+            <img src={form.heroImageUrl} alt="Hero" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+          )}
+          {uploadingImage ? (
+            <>
+              <Loader2 className="animate-spin text-amber-400 relative z-10" size={24} />
+              <p className="text-neutral-400 text-xs font-semibold uppercase tracking-wider relative z-10">UPLOADING...</p>
+            </>
+          ) : form.heroImageUrl ? (
+            <>
+              <span className="text-emerald-400 text-2xl relative z-10">✓</span>
+              <p className="text-emerald-400 text-xs font-semibold uppercase tracking-wider relative z-10">IMAGE UPLOADED</p>
+              <p className="text-neutral-400 text-xs relative z-10">Click to change</p>
+            </>
+          ) : (
+            <>
+              <span className="text-neutral-600 text-2xl relative z-10">📷</span>
+              <p className="text-neutral-400 text-xs font-semibold uppercase tracking-wider relative z-10">UPLOAD HERO IMAGE</p>
+              <p className="text-neutral-600 text-xs text-center px-6 relative z-10">Recommended: 1920x1080 (High Resolution)</p>
+            </>
+          )}
+        </button>
+        <input ref={heroFileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+      </section>
+
       {/* Amenities */}
       <section>
-        <p className="text-amber-400 font-bold text-xs uppercase tracking-widest mb-3">02 AMENITIES</p>
+        <p className="text-amber-400 font-bold text-xs uppercase tracking-widest mb-3">03 AMENITIES</p>
         <div className="grid grid-cols-2 gap-2">
           {AMENITIES.map((a) => {
             const selected = amenities.includes(a.id);
@@ -135,7 +201,7 @@ export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds }: Venu
 
       {/* Contact */}
       <section>
-        <p className="text-amber-400 font-bold text-xs uppercase tracking-widest mb-3">03 CONTACT</p>
+        <p className="text-amber-400 font-bold text-xs uppercase tracking-widest mb-3">04 CONTACT</p>
         <div className="flex items-center gap-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-3 py-3">
           <Phone size={14} className="text-[#BFC8CA] shrink-0" />
           <span className="text-neutral-400 text-sm">+91</span>

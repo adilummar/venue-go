@@ -24,7 +24,37 @@ export default function ListVenuePage() {
     description: "",
     pricePerEvening: "",
     category: "theatre" as "open_air" | "theatre" | "concert_hall" | "palatial",
+    heroImageUrl: "",
   });
+
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+
+      setForm((f) => ({ ...f, heroImageUrl: data.data.url }));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const toggleAmenity = (id: number) => {
     setSelectedAmenities((prev) =>
@@ -58,6 +88,7 @@ export default function ListVenuePage() {
           amenityIds: selectedAmenities,
           status,
           category: form.category,
+          heroImageUrl: form.heroImageUrl || undefined,
         }),
       });
 
@@ -186,13 +217,32 @@ export default function ListVenuePage() {
             <button
               type="button"
               onClick={() => heroFileRef.current?.click()}
-              className="w-full bg-[#1a1a1a] border border-dashed border-[#2a2a2a] rounded-2xl py-10 flex flex-col items-center gap-2 cursor-pointer hover:border-[#3a3a3a] transition-colors"
+              disabled={uploadingImage}
+              className="w-full bg-[#1a1a1a] border border-dashed border-[#2a2a2a] rounded-2xl py-10 flex flex-col items-center gap-2 cursor-pointer hover:border-[#3a3a3a] transition-colors relative overflow-hidden"
             >
-              <span className="text-neutral-600 text-2xl">📷</span>
-              <p className="text-neutral-400 text-xs font-semibold uppercase tracking-wider">UPLOAD HERO IMAGE</p>
-              <p className="text-neutral-600 text-xs text-center px-6">Recommended: 1920x1080 (High Resolution)</p>
+              {form.heroImageUrl && (
+                <img src={form.heroImageUrl} alt="Hero" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+              )}
+              {uploadingImage ? (
+                <>
+                  <Loader2 className="animate-spin text-amber-400 relative z-10" size={24} />
+                  <p className="text-neutral-400 text-xs font-semibold uppercase tracking-wider relative z-10">UPLOADING...</p>
+                </>
+              ) : form.heroImageUrl ? (
+                <>
+                  <span className="text-emerald-400 text-2xl relative z-10">✓</span>
+                  <p className="text-emerald-400 text-xs font-semibold uppercase tracking-wider relative z-10">IMAGE UPLOADED</p>
+                  <p className="text-neutral-400 text-xs relative z-10">Click to change</p>
+                </>
+              ) : (
+                <>
+                  <span className="text-neutral-600 text-2xl relative z-10">📷</span>
+                  <p className="text-neutral-400 text-xs font-semibold uppercase tracking-wider relative z-10">UPLOAD HERO IMAGE</p>
+                  <p className="text-neutral-600 text-xs text-center px-6 relative z-10">Recommended: 1920x1080 (High Resolution)</p>
+                </>
+              )}
             </button>
-            <input ref={heroFileRef} type="file" accept="image/*" className="hidden" />
+            <input ref={heroFileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
             <div className="bg-[#1a1a1a] border border-dashed border-[#2a2a2a] rounded-2xl py-10 flex flex-col items-center gap-2 cursor-pointer hover:border-[#3a3a3a] transition-colors">
               <p className="text-neutral-400 text-xs font-semibold uppercase tracking-wider">MORE PHOTOS</p>
               <p className="text-neutral-600 text-xs">Upload after listing is created</p>
