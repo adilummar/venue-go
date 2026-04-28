@@ -13,7 +13,6 @@ interface VenueCardProps {
 }
 
 export const VenueCard = ({ venue, priority = false }: VenueCardProps) => {
-  console.log(`[VenueCard] Venue: ${venue.name}, heroImageUrl:`, venue.heroImageUrl);
   return (
     <Link href={`/venue/${venue.id}`} className="block">
       <div className="bg-[#1c1f22] rounded-xl overflow-hidden border border-[#242830] transition-all hover:border-[#353c45] active:scale-[0.99]" style={{ height: "579.5px" }}>

@@ -138,15 +138,19 @@ export default function ListVenuePage() {
           description: form.description || undefined,
           whatsapp: form.whatsapp ? `+91${form.whatsapp}` : undefined,
           amenityIds: selectedAmenities,
-          status,
           category: form.category,
           heroImageUrl: imageUrls[0] || undefined,
           images: imageUrls.length > 0 ? imageUrls : undefined,
         }),
       });
+      const d = await res.json();
       if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error ?? "Submission failed");
+        const msg = typeof d.error === "string"
+          ? d.error
+          : d.error != null
+          ? JSON.stringify(d.error)
+          : "Submission failed";
+        throw new Error(msg);
       }
       setSubmitted(true);
       setTimeout(() => router.push("/owner/dashboard"), 2000);

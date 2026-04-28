@@ -169,7 +169,14 @@ export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds, existi
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(JSON.stringify(data.error));
+      if (!res.ok) {
+        const msg = typeof data.error === "string"
+          ? data.error
+          : data.error != null
+          ? JSON.stringify(data.error)
+          : "Save failed";
+        throw new Error(msg);
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err: any) {

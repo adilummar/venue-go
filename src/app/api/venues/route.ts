@@ -42,13 +42,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = createVenueSchema.safeParse(body);
     if (!parsed.success) {
+      // Flatten field errors into a readable string
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const firstError = Object.entries(fieldErrors)
+        .map(([field, msgs]) => `${field}: ${(msgs ?? []).join(", ")}`)
+        .join(" | ");
       return NextResponse.json(
-        { data: null, error: parsed.error.flatten().fieldErrors },
+        { data: null, error: firstError || "Validation failed" },
         { status: 400 }
       );
     }
 
-    const { amenityIds, whatsapp, pricePerEvening, status, images, ...venueData } = parsed.data;
+    const { amenityIds, whatsapp, pricePerEvening, images, ...venueData } = parsed.data;
     const slug = generateSlug(venueData.name);
 
     // Save WhatsApp to owner profile if provided
@@ -64,7 +69,8 @@ export async function POST(request: NextRequest) {
         ownerId: session.user.id,
         // First image becomes heroImageUrl
         heroImageUrl: images?.[0] ?? venueData.heroImageUrl,
-        status: (status ?? "pending_review") as "draft" | "pending_review" | "live" | "archived",
+        // Go live immediately — no admin review required
+        status: "live" as const,
       },
       images
     );
@@ -75,3 +81,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ data: null, error: "Internal server error" }, { status: 500 });
   }
 }
+

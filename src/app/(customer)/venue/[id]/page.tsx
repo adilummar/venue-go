@@ -39,11 +39,11 @@ export default async function VenueDetailPage({ params }: PageProps) {
 
   const reviewsData = await getReviewsByVenue(id, 1, 5);
 
-  const allImages = venue.images?.length
+  const allImages: string[] = venue.images?.length
     ? venue.images.map((img) => img.url)
     : venue.heroImageUrl
     ? [venue.heroImageUrl]
-    : ["/placeholder-venue.jpg"];
+    : [];
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] pb-24">
