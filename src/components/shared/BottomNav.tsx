@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Ticket, User } from "lucide-react";
+import { Home, Heart, Ticket, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/", icon: Home, label: "HOME" },
+  { href: "/wishlist", icon: Heart, label: "SAVED" },
   { href: "/tickets", icon: Ticket, label: "BOOKINGS" },
   { href: "/profile", icon: User, label: "PROFILE" },
 ];
@@ -36,13 +37,14 @@ export const BottomNav = () => {
                   "transition-colors",
                   isActive ? "text-amber-400" : "text-[#BFC8CA]"
                 )}
+                fill={isActive && (href === "/wishlist") ? "currentColor" : "none"}
               />
               <span
                 className={cn(
                   "text-[10px] font-semibold tracking-widest transition-colors",
                   isActive ? "text-amber-400" : "text-[#BFC8CA]"
                 )}
-                style={{fontFamily: 'var(--font-manrope)'}}
+                style={{ fontFamily: "var(--font-manrope)" }}
               >
                 {label}
               </span>

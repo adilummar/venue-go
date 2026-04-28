@@ -93,12 +93,18 @@ export default function RegisterPage() {
         </div>
 
         {/* Google OAuth */}
-        <a
-          href="/api/auth/signin/google"
+        <button
+          type="button"
+          onClick={() => {
+            document.cookie = `intended_role=${role}; path=/; max-age=300; SameSite=Lax`;
+            import("next-auth/react").then(({ signIn }) => 
+              signIn("google", { callbackUrl: role === "owner" ? "/owner/dashboard" : "/" })
+            );
+          }}
           className="w-full flex items-center justify-center gap-3 bg-white text-gray-900 font-semibold py-3.5 rounded-2xl hover:bg-gray-50 transition-colors text-sm"
         >
           <GoogleIcon /> Continue with Google
-        </a>
+        </button>
 
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-[#2a2a2a]" />

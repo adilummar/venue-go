@@ -1,7 +1,9 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppStore } from "@/store/app-store";
+import { useSession } from "next-auth/react";
+import { useEffect } from "react";
 
 async function toggleWishlistApi(venueId: string): Promise<{ wishlisted: boolean }> {
   const res = await fetch("/api/wishlists/toggle", {
@@ -16,7 +18,26 @@ async function toggleWishlistApi(venueId: string): Promise<{ wishlisted: boolean
 
 export function useWishlist() {
   const queryClient = useQueryClient();
-  const { wishlistedVenueIds, setWishlisted } = useAppStore();
+  const { data: session } = useSession();
+  const { wishlistedVenueIds, setWishlisted, initWishlisted } = useAppStore();
+
+  const { data: wishlistIds } = useQuery({
+    queryKey: ["wishlists"],
+    queryFn: async () => {
+      const res = await fetch("/api/wishlists");
+      if (!res.ok) return [];
+      const json = await res.json();
+      return json.data.map((v: any) => v.id) as string[];
+    },
+    enabled: !!session?.user,
+    staleTime: 1000 * 60 * 5, // Cache for 5 mins
+  });
+
+  useEffect(() => {
+    if (wishlistIds) {
+      initWishlisted(wishlistIds);
+    }
+  }, [wishlistIds, initWishlisted]);
 
   const mutation = useMutation({
     mutationFn: toggleWishlistApi,

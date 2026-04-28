@@ -8,6 +8,7 @@ dotenv.config({ path: ".env.local" });
 import { db } from "./index";
 import { users, venues, amenities, venueAmenities } from "./schema";
 import { generateSlug } from "../lib/utils";
+import bcrypt from "bcryptjs";
 
 async function seed() {
   console.log("🌱 Seeding database...");
@@ -31,10 +32,13 @@ async function seed() {
 
   // ── 2. Owner user ─────────────────────────────────────────────────────────
   console.log("  → Inserting owner user...");
+  const defaultPasswordHash = await bcrypt.hash("password123", 10);
+  
   const [owner] = await db
     .insert(users)
     .values({
       email: "owner@venuego.dev",
+      passwordHash: defaultPasswordHash,
       name: "Rajesh Sharma",
       role: "owner",
       whatsapp: "919746117985",
@@ -52,6 +56,7 @@ async function seed() {
     .insert(users)
     .values({
       email: "customer@venuego.dev",
+      passwordHash: defaultPasswordHash,
       name: "Priya Nair",
       role: "customer",
       membership: "standard",
@@ -193,7 +198,7 @@ async function seed() {
   console.log(`\n✅ Seed complete!`);
   console.log(`   ${insertedVenues.length} venues created`);
   console.log(`   ${seededAmenities.length} amenities created`);
-  console.log(`\n🔑 Test accounts:`);
+  console.log(`\n🔑 Test accounts (Password for both: password123):`);
   console.log(`   Owner:    owner@venuego.dev`);
   console.log(`   Customer: customer@venuego.dev`);
   process.exit(0);

@@ -333,6 +333,20 @@ export const InquiryForm = ({
         <Lock size={12} />
         <span>This will open WhatsApp directly to contact the owner.</span>
       </div>
+
+      {/* Success tracking link */}
+      {saved && (
+        <div className="mt-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center">
+          <p className="text-emerald-400 text-xs font-bold mb-1">✓ Inquiry logged successfully!</p>
+          <a
+            href="/tickets"
+            className="text-amber-400 text-xs underline underline-offset-2 hover:text-amber-300"
+          >
+            Track your enquiry status → My Bookings
+          </a>
+        </div>
+      )}
     </div>
   );
 };
+

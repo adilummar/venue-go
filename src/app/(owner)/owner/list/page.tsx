@@ -23,6 +23,7 @@ export default function ListVenuePage() {
     whatsapp: "",
     description: "",
     pricePerEvening: "",
+    category: "theatre" as "open_air" | "theatre" | "concert_hall" | "palatial",
   });
 
   const toggleAmenity = (id: number) => {
@@ -56,7 +57,7 @@ export default function ListVenuePage() {
           whatsapp: form.whatsapp ? `+91${form.whatsapp}` : undefined,
           amenityIds: selectedAmenities,
           status,
-          category: "theatre", // default, can be expanded
+          category: form.category,
         }),
       });
 
@@ -121,6 +122,35 @@ export default function ListVenuePage() {
               <FormField label="STATE" placeholder="Maharashtra" value={form.state} onChange={(v) => update("state", v)} />
             </div>
             <FormField label="PRICE PER EVENING (₹)" placeholder="10000" type="number" value={form.pricePerEvening} onChange={(v) => update("pricePerEvening", v)} />
+
+            {/* Category selector */}
+            <div>
+              <label className="text-[#BFC8CA] text-[10px] font-bold uppercase tracking-widest block mb-2">VENUE CATEGORY *</label>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { value: "theatre", label: "Theatre", emoji: "🎭" },
+                  { value: "concert_hall", label: "Concert Hall", emoji: "🎵" },
+                  { value: "open_air", label: "Open Air", emoji: "🌿" },
+                  { value: "palatial", label: "Palatial", emoji: "🏛️" },
+                ] as const).map((cat) => (
+                  <button
+                    key={cat.value}
+                    type="button"
+                    onClick={() => update("category", cat.value)}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-3 rounded-xl border text-sm font-semibold transition-all",
+                      form.category === cat.value
+                        ? "bg-amber-400/10 border-amber-400/50 text-amber-400"
+                        : "bg-[#1a1a1a] border-[#2a2a2a] text-neutral-400"
+                    )}
+                  >
+                    <span>{cat.emoji}</span>
+                    <span>{cat.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <FormField label="DESCRIPTION" placeholder="Tell artists about this space..." value={form.description} onChange={(v) => update("description", v)} multiline />
           </div>
         </StepSection>

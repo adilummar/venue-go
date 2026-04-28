@@ -47,10 +47,10 @@ export async function POST(request: NextRequest) {
       { data: { id: user.id, email: user.email, name: user.name, role: user.role } },
       { status: 201 }
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("[POST /api/auth/register]", err);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error: " + (err.message || err.toString()) },
       { status: 500 }
     );
   }

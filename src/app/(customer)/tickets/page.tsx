@@ -2,72 +2,66 @@ import { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getBookingsByCustomer } from "@/db/queries/bookings";
-import { BookingCard } from "@/components/shared/BookingCard";
-import { Search, Bell } from "lucide-react";
+import { getInquiriesByCustomer } from "@/db/queries/inquiries";
+import { Bell } from "lucide-react";
+import { BrandLogo } from "@/components/shared/BrandLogo";
+import { TicketsTabs } from "@/components/shared/TicketsTabs";
+import type { BookingWithVenue } from "@/types";
 
-export const metadata: Metadata = { title: "My Tickets" };
+export const metadata: Metadata = { title: "My Bookings — VenueGo" };
 
 export default async function TicketsPage() {
   const session = await auth();
   if (!session?.user) redirect("/auth/login");
 
-  const { upcoming, past } = await getBookingsByCustomer(session.user.id);
+  const [bookingResult, inquiries] = await Promise.all([
+    getBookingsByCustomer(session.user.id),
+    getInquiriesByCustomer(session.user.id),
+  ]);
+
+  // Cast to shared type — the query shape matches but Drizzle's inferred string
+  // enum doesn't satisfy the literal union in BookingWithVenue.
+  const upcoming = bookingResult.upcoming as BookingWithVenue[];
+  const past = bookingResult.past as BookingWithVenue[];
+
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d]">
+    <div className="min-h-screen bg-[#121416]">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 pt-12 pb-4">
+      <header
+        className="flex items-center justify-between px-5 pb-3 bg-[#1A1C1E]"
+        style={{
+          paddingTop: "max(env(safe-area-inset-top), 16px)",
+          boxShadow: "0px 2px 4px -2px #0000001A, 0px 4px 6px -1px #0000001A",
+        }}
+      >
+        <BrandLogo size="lg" />
         <div className="flex items-center gap-2">
-          <span className="text-amber-400">🎭</span>
-          <span className="text-white font-bold">Venue Go</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="w-9 h-9 flex items-center justify-center rounded-full bg-[#1a1a1a] border border-[#2a2a2a]">
-            <Search size={16} className="text-neutral-400" />
-          </button>
-          <button className="w-9 h-9 flex items-center justify-center rounded-full bg-[#1a1a1a] border border-[#2a2a2a]">
-            <Bell size={16} className="text-neutral-400" />
+          <button className="w-9 h-9 flex items-center justify-center rounded-full bg-[#1c1f22] border border-[#242830]">
+            <Bell size={18} className="text-neutral-400" />
           </button>
         </div>
       </header>
 
-      <div className="px-4">
-        <h1 className="text-white font-bold text-3xl mb-1">My Tickets</h1>
-        <p className="text-[#BFC8CA] text-sm mb-6">Manage your upcoming events and past memories.</p>
-
-        {/* Upcoming */}
-        {upcoming.length > 0 && (
-          <section className="mb-8">
-            <p className="text-amber-400 text-xs font-bold uppercase tracking-widest mb-4">UPCOMING</p>
-            <div className="space-y-4">
-              {upcoming.map((b) => (
-                <BookingCard key={b.id} booking={b} variant="upcoming" />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* History */}
-        {past.length > 0 && (
-          <section className="mb-8">
-            <p className="text-[#BFC8CA] text-xs font-bold uppercase tracking-widest mb-4">HISTORY</p>
-            <div className="space-y-3">
-              {past.map((b) => (
-                <BookingCard key={b.id} booking={b} variant="past" />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Empty state */}
-        {upcoming.length === 0 && past.length === 0 && (
-          <div className="flex flex-col items-center py-20 text-center">
-            <div className="text-5xl mb-4">🎫</div>
-            <h3 className="text-white font-bold text-lg mb-1">No bookings yet</h3>
-            <p className="text-[#BFC8CA] text-sm">Start exploring venues to book your first event</p>
-          </div>
-        )}
+      {/* Title section */}
+      <div className="px-5 pt-6 pb-2 bg-[#1A1C1E]">
+        <h1
+          className="text-white font-bold text-2xl"
+          style={{ fontFamily: "var(--font-noto-serif)" }}
+        >
+          My Bookings
+        </h1>
+        <p className="text-[#BFC8CA] text-sm mt-0.5">
+          Track your reservations and enquiries
+        </p>
       </div>
+
+      {/* Tabs */}
+      <TicketsTabs
+        upcoming={upcoming}
+        past={past}
+        inquiries={inquiries}
+      />
     </div>
   );
 }

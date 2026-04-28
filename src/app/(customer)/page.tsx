@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import { Search } from "lucide-react";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { getVenues } from "@/db/queries/venues";
 import { VenueCard } from "@/components/venue/VenueCard";
 import { SearchBar } from "@/components/shared/SearchBar";
@@ -25,7 +27,12 @@ interface PageProps {
 export default async function ExplorePage({ searchParams }: PageProps) {
   const params = await searchParams;
 
-  // Graceful DB error handling — show empty state instead of crashing
+  // Owners get their own dashboard — redirect immediately
+  const session = await auth();
+  if (session?.user?.role === "owner" || session?.user?.role === "admin") {
+    redirect("/owner/dashboard");
+  }
+
   let result: Awaited<ReturnType<typeof getVenues>> = {
     venues: [],
     total: 0,

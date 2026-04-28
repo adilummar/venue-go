@@ -4,6 +4,8 @@ import Google from "next-auth/providers/google";
 import { getUserByEmail, createUser, getUserById } from "@/db/queries/users";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import { authConfig } from "./auth.config";
+import { cookies } from "next/headers";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -11,6 +13,7 @@ const credentialsSchema = z.object({
 });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -56,11 +59,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           const existingUser = await getUserByEmail(user.email);
           if (!existingUser) {
+            let role = "customer";
+            try {
+              const cookieStore = await cookies();
+              const intendedRole = cookieStore.get("intended_role")?.value;
+              if (intendedRole === "owner") {
+                role = "owner";
+              }
+            } catch (e) {
+              // cookies() might throw if called outside of request scope, though NextAuth callbacks are usually within request scope
+            }
+
             await createUser({
               email: user.email,
               name: user.name ?? "Unknown",
               avatarUrl: user.image ?? undefined,
-              role: "customer",
+              role,
             });
           }
         } catch (err) {
@@ -109,11 +123,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
   },
-  pages: {
-    signIn: "/auth/login",
-    error: "/auth/error",
-  },
-  session: { strategy: "jwt" },
 });
 
 // ── NextAuth v5 type augmentation ──────────────────────────────────────────────
