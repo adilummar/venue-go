@@ -57,8 +57,18 @@ export default async function OwnerVenuesPage() {
             {venues.map((venue) => (
               <div key={venue.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl overflow-hidden">
                 <div className="relative h-40 bg-[#2a2a2a]">
-                  {venue.heroImageUrl && (
-                    <Image src={venue.heroImageUrl} alt={venue.name} fill className="object-cover" />
+                  {venue.heroImageUrl ? (
+                    venue.heroImageUrl.startsWith("/uploads") ? (
+                      <img
+                        src={venue.heroImageUrl}
+                        alt={venue.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Image src={venue.heroImageUrl} alt={venue.name} fill className="object-cover" />
+                    )
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-4xl opacity-30">🏛️</div>
                   )}
                   <div className="absolute top-3 right-3">
                     <Badge variant={venue.status === "live" ? "live" : venue.status === "pending_review" ? "review" : "default"}>

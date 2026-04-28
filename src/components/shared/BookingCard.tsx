@@ -24,12 +24,11 @@ export const BookingCard = ({ booking, variant }: BookingCardProps) => {
         {/* Venue image */}
         <div className="relative h-[44] bg-[#222]">
           {booking.venue?.heroImageUrl && (
-            <Image
-              src={booking.venue.heroImageUrl}
-              alt={booking.venue.name ?? ""}
-              fill
-              className="object-cover"
-            />
+            booking.venue.heroImageUrl.startsWith("/uploads") ? (
+              <img src={booking.venue.heroImageUrl} alt={booking.venue.name ?? ""} className="w-full h-full object-cover" />
+            ) : (
+              <Image src={booking.venue.heroImageUrl} alt={booking.venue.name ?? ""} fill className="object-cover" />
+            )
           )}
         </div>
         <div className="p-4">
