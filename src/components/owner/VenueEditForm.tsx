@@ -90,8 +90,10 @@ export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds, existi
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       const json = await res.json();
       if (!res.ok) {
-        setImages((prev) => prev.map((img) => img.id === id ? { ...img, uploading: false, error: json.error || "Upload failed" } : img));
-        setFormError(`❌ "${file.name}": ${json.error || "Upload failed"}`);
+        const errorMsg = typeof json.error === "string" ? json.error : 
+                         (json.error?.message || JSON.stringify(json.error) || "Upload failed");
+        setImages((prev) => prev.map((img) => img.id === id ? { ...img, uploading: false, error: errorMsg } : img));
+        setFormError(`❌ "${file.name}": ${errorMsg}`);
       } else {
         setImages((prev) => prev.map((img) => img.id === id ? { ...img, url: json.data.url, uploading: false } : img));
       }

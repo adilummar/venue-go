@@ -59,12 +59,14 @@ export default function ListVenuePage() {
       const json = await res.json();
 
       if (!res.ok) {
+        const errorMsg = typeof json.error === "string" ? json.error : 
+                         (json.error?.message || JSON.stringify(json.error) || "Upload failed");
         setImages((prev) =>
           prev.map((img) =>
-            img.id === id ? { ...img, uploading: false, error: json.error || "Upload failed" } : img
+            img.id === id ? { ...img, uploading: false, error: errorMsg } : img
           )
         );
-        return { error: json.error || "Upload failed" };
+        return { error: errorMsg };
       }
 
       setImages((prev) =>
