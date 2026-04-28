@@ -28,7 +28,6 @@ export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds, existi
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [amenities, setAmenities] = useState<number[]>(selectedAmenityIds);
@@ -49,6 +48,8 @@ export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds, existi
     ? existingImages
     : venue.heroImageUrl ? [venue.heroImageUrl] : [];
   const [images, setImages] = useState<string[]>(initImages);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<{ type: "error" | "success"; msg: string } | null>(null);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -66,7 +67,7 @@ export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds, existi
       }
 
       setUploadingImage(true);
-      setError("");
+      setUploadStatus(null);
       try {
         const formData = new FormData();
         formData.append("file", file);
@@ -74,8 +75,12 @@ export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds, existi
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Upload failed");
         setImages((prev) => [...prev, data.data.url]);
+        setUploadStatus({ type: "success", msg: `"${file.name}" uploaded!` });
+        setTimeout(() => setUploadStatus(null), 3000);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Failed to upload image");
+        const msg = err instanceof Error ? err.message : "Failed to upload image";
+        setError(msg);
+        setUploadStatus({ type: "error", msg });
       } finally {
         setUploadingImage(false);
       }
@@ -166,6 +171,18 @@ export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds, existi
           <p className="text-neutral-500 text-[11px]">• Recommended resolution: 1920×1080</p>
           <p className="text-neutral-500 text-[11px]">• First image becomes the cover / hero photo</p>
         </div>
+
+        {/* Inline upload status */}
+        {uploadStatus && (
+          <div className={`rounded-xl px-4 py-2.5 mb-3 flex items-center gap-2 text-sm font-semibold ${
+            uploadStatus.type === "success"
+              ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
+              : "bg-red-500/10 border border-red-500/20 text-red-400"
+          }`}>
+            <span>{uploadStatus.type === "success" ? "✓" : "✕"}</span>
+            <span>{uploadStatus.msg}</span>
+          </div>
+        )}
 
         {/* Images grid */}
         {images.length > 0 ? (

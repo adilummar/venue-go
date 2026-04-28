@@ -28,6 +28,7 @@ export default function ListVenuePage() {
 
   const [images, setImages] = useState<string[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<{ type: "error" | "success"; msg: string } | null>(null);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -47,7 +48,7 @@ export default function ListVenuePage() {
       }
 
       setUploadingImage(true);
-      setError("");
+      setUploadStatus(null);
 
       try {
         const formData = new FormData();
@@ -56,8 +57,12 @@ export default function ListVenuePage() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Upload failed");
         setImages((prev) => [...prev, data.data.url]);
+        setUploadStatus({ type: "success", msg: `"${file.name}" uploaded successfully!` });
+        setTimeout(() => setUploadStatus(null), 3000);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Failed to upload image");
+        const msg = err instanceof Error ? err.message : "Failed to upload image";
+        setError(msg);
+        setUploadStatus({ type: "error", msg });
       } finally {
         setUploadingImage(false);
       }
@@ -235,6 +240,18 @@ export default function ListVenuePage() {
               <p className="text-neutral-500 text-[11px]">• Recommended resolution: 1920×1080</p>
               <p className="text-neutral-500 text-[11px]">• First image becomes the cover photo</p>
             </div>
+
+            {/* Inline upload status */}
+            {uploadStatus && (
+              <div className={`rounded-xl px-4 py-2.5 flex items-center gap-2 text-sm font-semibold ${
+                uploadStatus.type === "success"
+                  ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
+                  : "bg-red-500/10 border border-red-500/20 text-red-400"
+              }`}>
+                <span>{uploadStatus.type === "success" ? "✓" : "✕"}</span>
+                <span>{uploadStatus.msg}</span>
+              </div>
+            )}
 
             {/* Uploaded images grid */}
             {images.length > 0 && (

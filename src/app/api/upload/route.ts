@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getToken } from "next-auth/jwt";
 import fs from "fs/promises";
 import path from "path";
 import crypto from "crypto";
@@ -9,9 +9,10 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ data: null, error: "Unauthorized" }, { status: 401 });
+    // Use getToken (JWT-only, no DB needed) to check auth
+    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+    if (!token) {
+      return NextResponse.json({ data: null, error: "Unauthorized — please log in first" }, { status: 401 });
     }
 
     const formData = await request.formData();
