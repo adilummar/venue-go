@@ -148,28 +148,30 @@ export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds }: Venu
           type="button"
           onClick={() => heroFileRef.current?.click()}
           disabled={uploadingImage}
-          className="w-full bg-[#1a1a1a] border border-dashed border-[#2a2a2a] rounded-2xl py-10 flex flex-col items-center gap-2 cursor-pointer hover:border-[#3a3a3a] transition-colors relative overflow-hidden"
+          className="w-full bg-[#1a1a1a] border border-dashed border-[#2a2a2a] rounded-2xl py-10 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-[#3a3a3a] transition-colors relative overflow-hidden group min-h-[200px]"
         >
           {form.heroImageUrl && (
-            <img src={form.heroImageUrl} alt="Hero" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+            <div className="absolute inset-0 w-full h-full">
+              <img src={form.heroImageUrl} alt="Hero Preview" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center">
+                 <span className="text-white text-2xl mb-2">📷</span>
+                 <p className="text-white text-xs font-semibold uppercase tracking-wider">CLICK TO CHANGE IMAGE</p>
+              </div>
+            </div>
           )}
+          
           {uploadingImage ? (
-            <>
-              <Loader2 className="animate-spin text-amber-400 relative z-10" size={24} />
-              <p className="text-neutral-400 text-xs font-semibold uppercase tracking-wider relative z-10">UPLOADING...</p>
-            </>
-          ) : form.heroImageUrl ? (
-            <>
-              <span className="text-emerald-400 text-2xl relative z-10">✓</span>
-              <p className="text-emerald-400 text-xs font-semibold uppercase tracking-wider relative z-10">IMAGE UPLOADED</p>
-              <p className="text-neutral-400 text-xs relative z-10">Click to change</p>
-            </>
-          ) : (
-            <>
-              <span className="text-neutral-600 text-2xl relative z-10">📷</span>
-              <p className="text-neutral-400 text-xs font-semibold uppercase tracking-wider relative z-10">UPLOAD HERO IMAGE</p>
-              <p className="text-neutral-600 text-xs text-center px-6 relative z-10">Recommended: 1920x1080 (High Resolution)</p>
-            </>
+            <div className="relative z-10 flex flex-col items-center bg-[#1a1a1a]/80 p-4 rounded-xl">
+              <Loader2 className="animate-spin text-amber-400 mb-2" size={24} />
+              <p className="text-neutral-200 text-xs font-semibold uppercase tracking-wider">UPLOADING...</p>
+            </div>
+          ) : !form.heroImageUrl && (
+            <div className="relative z-10 flex flex-col items-center">
+              <span className="text-neutral-600 text-3xl mb-2">📷</span>
+              <p className="text-neutral-400 text-xs font-semibold uppercase tracking-wider">UPLOAD HERO IMAGE</p>
+              <p className="text-neutral-500 text-xs text-center px-6 mt-2">Recommended: 1920x1080 (High Resolution)</p>
+              <p className="text-neutral-600 text-[10px] text-center px-6 mt-1">Formats: JPEG, PNG, WEBP, AVIF (Max 5MB)</p>
+            </div>
           )}
         </button>
         <input ref={heroFileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
