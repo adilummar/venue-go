@@ -34,14 +34,18 @@ const nextConfig: NextConfig = {
   turbopack: {},
 
   // Allow mobile devices on the same LAN to access the dev server
-  allowedDevOrigins: ["192.168.1.102"],
+  allowedDevOrigins: ["192.168.1.10", "192.168.1.102"],
 
   images: {
+    // Allow optimized images from these remote hosts
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
+    // Disable optimization for local /uploads/* paths
+    // This lets us serve files saved to public/uploads without restriction
+    unoptimized: process.env.NODE_ENV === "development",
   },
 };
 

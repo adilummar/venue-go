@@ -18,14 +18,23 @@ export const VenueCard = ({ venue, priority = false }: VenueCardProps) => {
       <div className="bg-[#1c1f22] rounded-xl overflow-hidden border border-[#242830] transition-all hover:border-[#353c45] active:scale-[0.99]" style={{ height: "579.5px" }}>
         {/* Image */}
         <div className="relative w-full" style={{ height: "427.5px" }}>
-          <Image
-            src={venue.heroImageUrl ?? "/placeholder-venue.jpg"}
-            alt={venue.name}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 50vw"
-            priority={priority}
-          />
+          {/* Use plain img for local /uploads paths; Next Image for external CDN URLs */}
+          {venue.heroImageUrl?.startsWith("/uploads") ? (
+            <img
+              src={venue.heroImageUrl}
+              alt={venue.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <Image
+              src={venue.heroImageUrl ?? "/placeholder-venue.jpg"}
+              alt={venue.name}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
+              priority={priority}
+            />
+          )}
           {/* Wishlist button */}
           <div className="absolute top-3 right-3">
             <WishlistButton venueId={venue.id} />
