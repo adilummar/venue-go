@@ -13,27 +13,34 @@ interface VenueCardProps {
 }
 
 export const VenueCard = ({ venue, priority = false }: VenueCardProps) => {
+  console.log(`[VenueCard] Venue: ${venue.name}, heroImageUrl:`, venue.heroImageUrl);
   return (
     <Link href={`/venue/${venue.id}`} className="block">
       <div className="bg-[#1c1f22] rounded-xl overflow-hidden border border-[#242830] transition-all hover:border-[#353c45] active:scale-[0.99]" style={{ height: "579.5px" }}>
         {/* Image */}
         <div className="relative w-full" style={{ height: "427.5px" }}>
           {/* Use plain img for local /uploads paths; Next Image for external CDN URLs */}
-          {venue.heroImageUrl?.startsWith("/uploads") ? (
-            <img
-              src={venue.heroImageUrl}
-              alt={venue.name}
-              className="w-full h-full object-cover"
-            />
+          {venue.heroImageUrl ? (
+            venue.heroImageUrl.startsWith("/uploads") ? (
+              <img
+                src={venue.heroImageUrl}
+                alt={venue.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Image
+                src={venue.heroImageUrl}
+                alt={venue.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                priority={priority}
+              />
+            )
           ) : (
-            <Image
-              src={venue.heroImageUrl ?? "/placeholder-venue.jpg"}
-              alt={venue.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 50vw"
-              priority={priority}
-            />
+            <div className="w-full h-full flex items-center justify-center bg-[#2a2a2a] text-6xl opacity-30">
+              🏛️
+            </div>
           )}
           {/* Wishlist button */}
           <div className="absolute top-3 right-3">

@@ -17,21 +17,27 @@ export const PhotoGallery = ({ images }: PhotoGalleryProps) => {
   return (
     <div className="relative w-full aspect-[4/3] overflow-hidden bg-[#1a1a1a]">
       {/* Smart image: plain img for local uploads, Next Image for external */}
-      {(images[current] ?? "/placeholder-venue.jpg").startsWith("/uploads") ? (
-        <img
-          src={images[current]}
-          alt={`Venue photo ${current + 1}`}
-          className="w-full h-full object-cover transition-opacity duration-300"
-        />
+      {images.length > 0 && images[current] ? (
+        images[current].startsWith("/uploads") ? (
+          <img
+            src={images[current]}
+            alt={`Venue photo ${current + 1}`}
+            className="w-full h-full object-cover transition-opacity duration-300"
+          />
+        ) : (
+          <Image
+            src={images[current]}
+            alt={`Venue photo ${current + 1}`}
+            fill
+            className="object-cover transition-opacity duration-300"
+            priority
+            sizes="100vw"
+          />
+        )
       ) : (
-        <Image
-          src={images[current] ?? "/placeholder-venue.jpg"}
-          alt={`Venue photo ${current + 1}`}
-          fill
-          className="object-cover transition-opacity duration-300"
-          priority
-          sizes="100vw"
-        />
+        <div className="w-full h-full flex items-center justify-center bg-[#2a2a2a] text-8xl opacity-30">
+          🏛️
+        </div>
       )}
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/70" />
