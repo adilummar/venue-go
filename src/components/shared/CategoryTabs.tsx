@@ -8,7 +8,7 @@ export const CategoryTabs = () => {
   const { filters, setFilter } = useAppStore();
 
   return (
-    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1 pt-[32px] space-y-[8px]">
+    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1 pt-8">
       {CATEGORIES.map(({ value, label, emoji }) => {
         const isActive = filters.category === value;
         return (

@@ -200,7 +200,7 @@ export function OwnerInquiriesClient({ inquiries: initialInquiries, stats }: Pro
                           // Auto-mark as responded after WhatsApp tap
                           setTimeout(() => handleMarkResponded(inq.id), 1000);
                         }}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold text-white bg-[#25D366]/20 border border-[#25D366]/40 rounded-xl hover:bg-[#25D366]/30 uppercase tracking-wider transition-colors"
+                        className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold text-white bg-[#25D366]/20 border border-[#25D366]/40 rounded-xl hover:bg-[#25D366]/30 uppercase tracking-wider transition-colors touch-manipulation"
                       >
                         <MessageCircle size={14} className="text-[#25D366]" />
                         CHAT ON WHATSAPP
@@ -208,7 +208,7 @@ export function OwnerInquiriesClient({ inquiries: initialInquiries, stats }: Pro
                       <button
                         onClick={() => handleMarkResponded(inq.id)}
                         disabled={loadingId === inq.id}
-                        className="flex-1 py-2.5 text-xs font-bold text-white border border-[#3a3a3a] rounded-xl hover:bg-[#2a2a2a] uppercase tracking-wider transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                        className="flex-1 py-3 text-xs font-bold text-white border border-[#3a3a3a] rounded-xl hover:bg-[#2a2a2a] uppercase tracking-wider transition-colors disabled:opacity-50 flex items-center justify-center gap-1 touch-manipulation"
                       >
                         {loadingId === inq.id ? (
                           <Loader2 size={12} className="animate-spin" />
@@ -221,7 +221,7 @@ export function OwnerInquiriesClient({ inquiries: initialInquiries, stats }: Pro
                     <button
                       onClick={() => handleConfirmBooking(inq.id)}
                       disabled={confirmingId === inq.id}
-                      className="w-full py-3 text-sm font-bold text-black bg-amber-400 hover:bg-amber-500 rounded-xl transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                      className="w-full py-3.5 text-sm font-bold text-black bg-amber-400 hover:bg-amber-500 rounded-xl transition-colors disabled:opacity-60 flex items-center justify-center gap-2 touch-manipulation"
                     >
                       {confirmingId === inq.id ? (
                         <>
@@ -294,7 +294,7 @@ export function OwnerInquiriesClient({ inquiries: initialInquiries, stats }: Pro
                       )
                     );
                   }}
-                  className="flex-1 py-2 text-xs font-bold text-neutral-500 border border-[#2a2a2a] rounded-xl hover:bg-[#2a2a2a] uppercase tracking-wider transition-colors"
+                  className="flex-1 py-3 text-xs font-bold text-neutral-500 border border-[#2a2a2a] rounded-xl hover:bg-[#2a2a2a] uppercase tracking-wider transition-colors touch-manipulation"
                 >
                   ARCHIVE
                 </button>

@@ -65,7 +65,7 @@ export function TicketsTabs({ upcoming, past, inquiries }: TicketsTabsProps) {
         <button
           onClick={() => setActiveTab("bookings")}
           className={cn(
-            "flex-1 py-3.5 text-sm font-bold uppercase tracking-widest border-b-2 transition-colors",
+            "flex-1 py-4 text-sm font-bold uppercase tracking-widest border-b-2 transition-colors touch-manipulation",
             activeTab === "bookings"
               ? "text-amber-400 border-amber-400"
               : "text-[#BFC8CA] border-transparent"
@@ -76,7 +76,7 @@ export function TicketsTabs({ upcoming, past, inquiries }: TicketsTabsProps) {
         <button
           onClick={() => setActiveTab("inquiries")}
           className={cn(
-            "flex-1 py-3.5 text-sm font-bold uppercase tracking-widest border-b-2 transition-colors relative",
+            "flex-1 py-4 text-sm font-bold uppercase tracking-widest border-b-2 transition-colors relative touch-manipulation",
             activeTab === "inquiries"
               ? "text-amber-400 border-amber-400"
               : "text-[#BFC8CA] border-transparent"
@@ -208,7 +208,7 @@ export function TicketsTabs({ upcoming, past, inquiries }: TicketsTabsProps) {
                         {inq.venue?.id && (
                           <Link
                             href={`/venue/${inq.venue.id}`}
-                            className="flex-1 py-2 text-center text-xs font-bold text-white border border-[#353c45] rounded-xl hover:bg-[#262b30] transition-colors uppercase tracking-wider"
+                            className="flex-1 py-3 text-center text-xs font-bold text-white border border-[#353c45] rounded-xl hover:bg-[#262b30] transition-colors uppercase tracking-wider"
                           >
                             View Venue
                           </Link>

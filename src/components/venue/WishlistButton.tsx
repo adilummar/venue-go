@@ -49,7 +49,7 @@ export const WishlistButton = ({
       disabled={isPending}
       aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
       className={cn(
-        "w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center transition-all active:scale-90",
+        "w-11 h-11 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center transition-all active:scale-90 touch-manipulation",
         className
       )}
     >

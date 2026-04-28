@@ -52,8 +52,8 @@ export default async function VenueDetailPage({ params }: PageProps) {
         <PhotoGallery images={allImages} />
         {/* Top bar — absolute so it overlays the hero image only, not content below */}
         <header
-          className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-4 pb-3 bg-gradient-to-b from-black/80 to-transparent"
-          style={{ paddingTop: "max(env(safe-area-inset-top), 12px)" }}
+          className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-5 pb-3 bg-gradient-to-b from-black/80 to-transparent"
+          style={{ paddingTop: "max(env(safe-area-inset-top), 16px)" }}
         >
           <Link href="/" className="w-9 h-9 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm">
             <span className="text-white text-lg">←</span>

@@ -52,17 +52,22 @@ export const PhotoGallery = ({ images }: PhotoGalleryProps) => {
 
       {/* Dot indicators (shown when multiple images) */}
       {images.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1">
           {images.map((_, i) => (
             <button
               key={i}
               onClick={() => setCurrent(i)}
-              className={`rounded-full transition-all duration-300 ${
-                i === current
-                  ? "w-4 h-1.5 bg-white"
-                  : "w-1.5 h-1.5 bg-white/40"
-              }`}
-            />
+              aria-label={`Photo ${i + 1}`}
+              className="w-8 h-8 flex items-center justify-center touch-manipulation"
+            >
+              <span
+                className={`block rounded-full transition-all duration-300 ${
+                  i === current
+                    ? "w-4 h-1.5 bg-white"
+                    : "w-1.5 h-1.5 bg-white/40"
+                }`}
+              />
+            </button>
           ))}
         </div>
       )}
@@ -73,7 +78,7 @@ export const PhotoGallery = ({ images }: PhotoGalleryProps) => {
           {current > 0 && (
             <button
               onClick={prev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm touch-manipulation"
             >
               <ChevronLeft size={18} className="text-white" />
             </button>
@@ -81,7 +86,7 @@ export const PhotoGallery = ({ images }: PhotoGalleryProps) => {
           {current < images.length - 1 && (
             <button
               onClick={next}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm touch-manipulation"
             >
               <ChevronRight size={18} className="text-white" />
             </button>

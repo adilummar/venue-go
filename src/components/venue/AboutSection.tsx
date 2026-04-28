@@ -18,7 +18,7 @@ export const AboutSection = ({ description }: AboutSectionProps) => {
       {isLong && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-white text-sm font-semibold mt-2 flex items-center gap-1 hover:text-amber-400 transition-colors"
+          className="text-white text-sm font-semibold mt-2 flex items-center gap-1 hover:text-amber-400 transition-colors py-2 touch-manipulation"
         >
           {expanded ? "Show less" : "Show more ›"}
         </button>

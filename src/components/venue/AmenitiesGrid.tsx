@@ -38,7 +38,7 @@ export const AmenitiesGrid = ({ amenities }: AmenitiesGridProps) => {
       {amenities.length > 6 && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className="mt-4 px-5 py-2.5 border border-white/20 text-white text-sm font-semibold rounded-xl hover:bg-white/5 transition-colors"
+          className="mt-4 px-5 py-3 border border-white/20 text-white text-sm font-semibold rounded-xl hover:bg-white/5 transition-colors touch-manipulation"
         >
           {showAll ? "Show less" : `Show all ${amenities.length} amenities`}
         </button>

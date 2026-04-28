@@ -22,7 +22,7 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
           onClick={() => onChange(n)}
           onMouseEnter={() => setHover(n)}
           onMouseLeave={() => setHover(0)}
-          className="transition-transform hover:scale-110"
+          className="p-1 -m-1 transition-transform active:scale-90 touch-manipulation"
         >
           <Star
             size={28}
@@ -117,8 +117,13 @@ export function ReviewForm({ venueId, venueName }: ReviewFormProps) {
             <span className="text-neutral-300 text-sm w-32">{label}</span>
             <div className="flex gap-0.5">
               {[1, 2, 3, 4, 5].map((n) => (
-                <button key={n} type="button" onClick={() => set(n)}>
-                  <Star size={18} fill={value >= n ? "#f59e0b" : "none"} className={value >= n ? "text-amber-400" : "text-neutral-600"} />
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => set(n)}
+                  className="p-1.5 -m-1 touch-manipulation"
+                >
+                  <Star size={20} fill={value >= n ? "#f59e0b" : "none"} className={value >= n ? "text-amber-400" : "text-neutral-600"} />
                 </button>
               ))}
             </div>

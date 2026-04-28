@@ -41,8 +41,9 @@ export const SearchBar = () => {
     >
       {/* ── Location ── */}
       <div className="relative">
-        <div
-          className="px-5 py-4 cursor-pointer flex items-center justify-between gap-3"
+        <button
+          type="button"
+          className="px-5 py-4 w-full cursor-pointer flex items-center justify-between gap-3 touch-manipulation"
           onClick={() => setShowCityDropdown((o) => !o)}
         >
           <div className="flex-1 min-w-0">
@@ -73,7 +74,7 @@ export const SearchBar = () => {
               className={`text-[#BFC8CA] shrink-0 transition-transform ${showCityDropdown ? "rotate-180" : ""}`}
             />
           )}
-        </div>
+        </button>
 
         {/* City dropdown */}
         {showCityDropdown && (
@@ -101,7 +102,7 @@ export const SearchBar = () => {
                     setCityQuery("");
                     setShowCityDropdown(false);
                   }}
-                  className="w-full text-left px-4 py-3 text-sm text-neutral-300 hover:text-white hover:bg-[#262b30] transition-colors"
+                  className="w-full text-left px-4 py-3.5 text-sm text-neutral-300 hover:text-white hover:bg-[#262b30] transition-colors touch-manipulation"
                 >
                   {city}
                 </button>
@@ -169,7 +170,7 @@ export const SearchBar = () => {
       <div className="p-3 pt-1">
         <button
           onClick={handleSearch}
-          className="w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold text-black text-base transition-all active:scale-[0.98] shadow-lg"
+          className="w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold text-black text-base transition-all active:scale-[0.98] shadow-lg touch-manipulation"
           style={{
             // background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #fcd34d 100%)",
             background:

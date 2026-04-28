@@ -70,7 +70,7 @@ function DatePicker({
         <button
           type="button"
           onClick={prevMonth}
-          className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-[#222] transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-lg text-neutral-400 hover:text-white hover:bg-[#222] transition-colors touch-manipulation"
         >
           <ChevronLeft size={16} />
         </button>
@@ -80,7 +80,7 @@ function DatePicker({
         <button
           type="button"
           onClick={nextMonth}
-          className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-[#222] transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-lg text-neutral-400 hover:text-white hover:bg-[#222] transition-colors touch-manipulation"
         >
           <ChevronRight size={16} />
         </button>
@@ -112,7 +112,7 @@ function DatePicker({
               disabled={isPast}
               onClick={() => onChange(iso)}
               className={`
-                mx-auto flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium transition-all
+                mx-auto flex h-10 w-10 items-center justify-center rounded-full text-xs font-medium transition-all touch-manipulation
                 ${isPast ? "text-neutral-700 cursor-not-allowed" : "cursor-pointer"}
                 ${isSelected
                   ? "bg-amber-400 text-black font-bold shadow-md shadow-amber-900/30"
@@ -219,7 +219,7 @@ export const InquiryForm = ({
           <button
             type="button"
             onClick={() => setCalendarOpen(o => !o)}
-            className={`flex items-center gap-3 w-full border-b pb-3 transition-colors ${
+            className={`flex items-center gap-3 w-full border-b pb-3 transition-colors touch-manipulation ${
               calendarOpen ? "border-amber-400/60" : "border-[#2a2a2a]"
             }`}
           >
@@ -303,7 +303,7 @@ export const InquiryForm = ({
       <button
         onClick={handleSendViaWhatsApp}
         disabled={loading || !ownerWhatsapp}
-        className={`mt-6 flex items-center justify-center gap-2 w-full font-bold py-4 rounded-2xl text-base transition-all
+        className={`mt-6 flex items-center justify-center gap-2 w-full font-bold py-4 rounded-2xl text-base transition-all touch-manipulation
           ${isReady
             ? "bg-amber-400 hover:bg-amber-500 active:bg-amber-600 text-black shadow-lg shadow-amber-900/20"
             : "bg-[#2a2a2a] text-[#BFC8CA] cursor-not-allowed"
