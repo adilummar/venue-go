@@ -65,8 +65,9 @@ export async function POST(request: NextRequest) {
       { data: { url: result.secure_url, publicId: result.public_id }, error: null },
       { status: 200 }
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("[POST /api/upload]", err);
-    return NextResponse.json({ data: null, error: "Upload failed" }, { status: 500 });
+    const message = err?.message || err?.error?.message || "Upload failed. Please check Cloudinary configuration.";
+    return NextResponse.json({ data: null, error: message }, { status: 500 });
   }
 }

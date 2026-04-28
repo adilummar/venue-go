@@ -48,6 +48,16 @@ export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds }: Venu
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type)) {
+      setError("Format not supported. Please upload a JPEG, PNG, WEBP, or AVIF image.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("File size exceeded. Please upload an image smaller than 5MB.");
+      return;
+    }
+
     setUploadingImage(true);
     setError("");
 
