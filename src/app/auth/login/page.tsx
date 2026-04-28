@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { auth, signIn } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getUserByEmail } from "@/db/queries/users";
+import { AuthError } from "next-auth";
 
 export const metadata: Metadata = { title: "Sign In — VenueGo" };
 
@@ -38,7 +39,19 @@ export default async function LoginPage({
       }
     } catch {}
 
-    await signIn("credentials", { email, password, redirectTo });
+    try {
+      await signIn("credentials", { email, password, redirectTo });
+    } catch (error) {
+      if (error instanceof AuthError) {
+        switch (error.type) {
+          case "CredentialsSignin":
+            redirect(`/auth/login?error=CredentialsSignin${callbackUrl ? `&callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`);
+          default:
+            redirect(`/auth/login?error=Default${callbackUrl ? `&callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`);
+        }
+      }
+      throw error;
+    }
   }
 
   return (
@@ -51,14 +64,12 @@ export default async function LoginPage({
       </div>
 
       <div className="w-full max-w-sm space-y-4">
-        {/* Error from NextAuth */}
-        {error && (
+        {/* Error from NextAuth (OAuth only) */}
+        {error && error !== "CredentialsSignin" && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-center">
             <p className="text-red-400 text-sm font-semibold">
               {error === "OAuthSignin" || error === "OAuthCallbackError"
                 ? "Google sign-in failed. Check your OAuth credentials in .env.local."
-                : error === "CredentialsSignin"
-                ? "Invalid email or password. Please try again."
                 : "Sign in failed. Please try again."}
             </p>
           </div>
@@ -98,14 +109,6 @@ export default async function LoginPage({
           <div className="flex-1 h-px bg-[#2a2a2a]" />
         </div>
 
-        {/* Dev quick-login hint */}
-        <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-3">
-          <p className="text-teal-400 text-xs font-semibold mb-1">🔑 Test accounts</p>
-          <p className="text-neutral-400 text-xs font-mono">owner@venuego.dev</p>
-          <p className="text-neutral-400 text-xs font-mono">customer@venuego.dev</p>
-          <p className="text-neutral-600 text-xs mt-1">(any password works in dev mode)</p>
-        </div>
-
         {/* Email form */}
         <form action={handleCredentials} className="space-y-3">
           <input
@@ -122,6 +125,16 @@ export default async function LoginPage({
             placeholder="Password (any value works in dev)"
             className="w-full bg-[#1a1a1a] border border-[#2a2a2a] text-white rounded-xl px-4 py-3.5 text-sm outline-none focus:border-amber-400 placeholder:text-neutral-600 transition-colors"
           />
+
+          {/* Error from Credentials */}
+          {error === "CredentialsSignin" && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-center">
+              <p className="text-red-400 text-sm font-semibold">
+                Invalid email or password. Please try again.
+              </p>
+            </div>
+          )}
+
           <button
             type="submit"
             className="w-full bg-amber-400 hover:bg-amber-500 active:bg-amber-600 text-black font-bold py-3.5 rounded-xl text-sm transition-colors"
