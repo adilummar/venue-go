@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Search, Phone, Loader2, CheckCircle, X, Plus } from "lucide-react";
+import { ArrowLeft, Search, Phone, Loader2, CheckCircle, X, Plus, ImageIcon } from "lucide-react";
 import { AMENITIES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -26,51 +26,87 @@ export default function ListVenuePage() {
     category: "theatre" as "open_air" | "theatre" | "concert_hall" | "palatial",
   });
 
-  const [images, setImages] = useState<string[]>([]);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<{ type: "error" | "success"; msg: string } | null>(null);
+  // Each entry: { localPreview: string (object URL), url: string (server url), uploading: boolean, error?: string }
+  type ImageEntry = { localPreview: string; url: string; uploading: boolean; error?: string };
+  const [images, setImages] = useState<ImageEntry[]>([]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-
-    // reset so same file can be re-selected if needed
+    // Reset input so same file can be picked again
     e.target.value = "";
 
-    for (const file of Array.from(files)) {
+    const fileArray = Array.from(files);
+
+    for (const file of fileArray) {
+      // --- Client-side validation ---
       if (!["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type)) {
-        setError(`"${file.name}" is not a supported format. Use JPEG, PNG, WEBP, or AVIF.`);
+        setError(`❌ "${file.name}": Format not supported. Please use JPEG, PNG, WEBP, or AVIF.`);
         continue;
       }
       if (file.size > 5 * 1024 * 1024) {
-        setError(`"${file.name}" exceeds 5MB. Please compress it first.`);
+        setError(`❌ "${file.name}": File too large (max 5MB).`);
         continue;
       }
 
-      setUploadingImage(true);
-      setUploadStatus(null);
+      // Immediately show a local preview with uploading=true
+      const localPreview = URL.createObjectURL(file);
+      const tempEntry: ImageEntry = { localPreview, url: "", uploading: true };
+      setImages((prev) => [...prev, tempEntry]);
+      const entryIndex = (await new Promise<number>((resolve) => {
+        setImages((prev) => {
+          const idx = prev.length - 1;
+          resolve(idx);
+          return prev;
+        });
+      }));
 
+      // Upload to server
       try {
         const formData = new FormData();
         formData.append("file", file);
         const res = await fetch("/api/upload", { method: "POST", body: formData });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Upload failed");
-        setImages((prev) => [...prev, data.data.url]);
-        setUploadStatus({ type: "success", msg: `"${file.name}" uploaded successfully!` });
-        setTimeout(() => setUploadStatus(null), 3000);
+
+        if (!res.ok) {
+          setImages((prev) =>
+            prev.map((img, i) =>
+              img.localPreview === localPreview
+                ? { ...img, uploading: false, error: data.error || "Upload failed" }
+                : img
+            )
+          );
+          setError(`❌ "${file.name}": ${data.error || "Upload failed"}`);
+        } else {
+          setImages((prev) =>
+            prev.map((img) =>
+              img.localPreview === localPreview
+                ? { ...img, url: data.data.url, uploading: false }
+                : img
+            )
+          );
+          setError(""); // Clear any previous error on success
+        }
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Failed to upload image";
-        setError(msg);
-        setUploadStatus({ type: "error", msg });
-      } finally {
-        setUploadingImage(false);
+        const msg = err instanceof Error ? err.message : "Network error. Check your connection.";
+        setImages((prev) =>
+          prev.map((img) =>
+            img.localPreview === localPreview
+              ? { ...img, uploading: false, error: msg }
+              : img
+          )
+        );
+        setError(`❌ "${file.name}": ${msg}`);
       }
     }
   };
 
-  const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
+  const removeImage = (localPreview: string) => {
+    setImages((prev) => {
+      const entry = prev.find((img) => img.localPreview === localPreview);
+      if (entry) URL.revokeObjectURL(entry.localPreview);
+      return prev.filter((img) => img.localPreview !== localPreview);
+    });
   };
 
   const toggleAmenity = (id: number) => {
@@ -82,14 +118,22 @@ export default function ListVenuePage() {
   const update = (key: string, val: string) =>
     setForm((f) => ({ ...f, [key]: val }));
 
+  const successfulImages = images.filter((img) => img.url && !img.uploading && !img.error);
+  const isUploading = images.some((img) => img.uploading);
+
   const handleSubmit = async (status: "live" | "draft") => {
     if (!form.name || !form.seating || !form.address || !form.city) {
       setError("Please fill in all required fields (name, capacity, address, city).");
       return;
     }
+    if (isUploading) {
+      setError("Please wait for all images to finish uploading.");
+      return;
+    }
     setError("");
     setSubmitting(true);
     try {
+      const imageUrls = successfulImages.map((img) => img.url);
       const res = await fetch("/api/venues", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -105,8 +149,8 @@ export default function ListVenuePage() {
           amenityIds: selectedAmenities,
           status,
           category: form.category,
-          heroImageUrl: images[0] || undefined,
-          images: images.length > 0 ? images : undefined,
+          heroImageUrl: imageUrls[0] || undefined,
+          images: imageUrls.length > 0 ? imageUrls : undefined,
         }),
       });
 
@@ -141,10 +185,7 @@ export default function ListVenuePage() {
     <div className="min-h-screen bg-[#0d0d0d]">
       {/* Header */}
       <header className="flex items-center justify-between px-4 pt-12 pb-4">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-1 text-neutral-400"
-        >
+        <button onClick={() => router.back()} className="flex items-center gap-1 text-neutral-400">
           <ArrowLeft size={18} /> <span className="text-sm">Venue Go</span>
         </button>
         <button className="w-9 h-9 flex items-center justify-center rounded-full bg-[#1a1a1a] border border-[#2a2a2a]">
@@ -153,11 +194,9 @@ export default function ListVenuePage() {
       </header>
 
       <div className="px-4">
-        <h1 className="text-white font-bold text-3xl leading-tight mb-2">
-          List Your<br />Auditorium
-        </h1>
+        <h1 className="text-white font-bold text-3xl leading-tight mb-2">List Your<br />Auditorium</h1>
         <p className="text-neutral-400 text-sm mb-8">
-          Join the network of premier performance spaces. Fill in the details to list your venue on Venue Go.
+          Join the network of premier performance spaces.
         </p>
 
         {/* Step 01 — Core Info */}
@@ -182,24 +221,15 @@ export default function ListVenuePage() {
                   { value: "open_air", label: "Open Air", emoji: "🌿" },
                   { value: "palatial", label: "Palatial", emoji: "🏛️" },
                 ] as const).map((cat) => (
-                  <button
-                    key={cat.value}
-                    type="button"
-                    onClick={() => update("category", cat.value)}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-3 rounded-xl border text-sm font-semibold transition-all",
-                      form.category === cat.value
-                        ? "bg-amber-400/10 border-amber-400/50 text-amber-400"
-                        : "bg-[#1a1a1a] border-[#2a2a2a] text-neutral-400"
-                    )}
-                  >
-                    <span>{cat.emoji}</span>
-                    <span>{cat.label}</span>
+                  <button key={cat.value} type="button" onClick={() => update("category", cat.value)}
+                    className={cn("flex items-center gap-2 px-3 py-3 rounded-xl border text-sm font-semibold transition-all",
+                      form.category === cat.value ? "bg-amber-400/10 border-amber-400/50 text-amber-400" : "bg-[#1a1a1a] border-[#2a2a2a] text-neutral-400"
+                    )}>
+                    <span>{cat.emoji}</span><span>{cat.label}</span>
                   </button>
                 ))}
               </div>
             </div>
-
             <FormField label="DESCRIPTION" placeholder="Tell artists about this space..." value={form.description} onChange={(v) => update("description", v)} multiline />
           </div>
         </StepSection>
@@ -210,17 +240,10 @@ export default function ListVenuePage() {
             {AMENITIES.slice(0, 8).map((a) => {
               const isSelected = selectedAmenities.includes(a.id);
               return (
-                <button
-                  key={a.id}
-                  type="button"
-                  onClick={() => toggleAmenity(a.id)}
-                  className={cn(
-                    "flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all",
-                    isSelected
-                      ? "bg-[#2a2a2a] border-amber-400/50 text-white"
-                      : "bg-[#1a1a1a] border-[#2a2a2a] text-neutral-400"
-                  )}
-                >
+                <button key={a.id} type="button" onClick={() => toggleAmenity(a.id)}
+                  className={cn("flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all",
+                    isSelected ? "bg-[#2a2a2a] border-amber-400/50 text-white" : "bg-[#1a1a1a] border-[#2a2a2a] text-neutral-400"
+                  )}>
                   <span className="text-teal-400 text-xl">{a.emoji}</span>
                   <span className="text-xs text-center">{a.label}</span>
                 </button>
@@ -229,105 +252,107 @@ export default function ListVenuePage() {
           </div>
         </StepSection>
 
-        {/* Step 03 — Gallery (Multi-upload) */}
+        {/* Step 03 — Gallery */}
         <StepSection number="03" label="GALLERY & VISUALS">
           <div className="space-y-3">
-            {/* Instructions */}
+
+            {/* Requirements box */}
             <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-4 py-3 space-y-1">
-              <p className="text-neutral-400 text-xs font-semibold">📋 IMAGE REQUIREMENTS</p>
-              <p className="text-neutral-500 text-[11px]">• Formats: JPEG, PNG, WEBP, AVIF</p>
-              <p className="text-neutral-500 text-[11px]">• Max size: 5MB per image</p>
-              <p className="text-neutral-500 text-[11px]">• Recommended resolution: 1920×1080</p>
-              <p className="text-neutral-500 text-[11px]">• First image becomes the cover photo</p>
+              <p className="text-[#BFC8CA] text-xs font-bold uppercase tracking-widest mb-1">📋 Image Requirements</p>
+              <p className="text-neutral-500 text-[11px]">• <span className="text-neutral-300">Formats:</span> JPEG, PNG, WEBP, AVIF</p>
+              <p className="text-neutral-500 text-[11px]">• <span className="text-neutral-300">Max size:</span> 5MB per image</p>
+              <p className="text-neutral-500 text-[11px]">• <span className="text-neutral-300">Resolution:</span> 1920×1080 recommended</p>
+              <p className="text-neutral-500 text-[11px]">• <span className="text-neutral-300">Note:</span> First image becomes the Cover photo</p>
             </div>
 
-            {/* Inline upload status */}
-            {uploadStatus && (
-              <div className={`rounded-xl px-4 py-2.5 flex items-center gap-2 text-sm font-semibold ${
-                uploadStatus.type === "success"
-                  ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
-                  : "bg-red-500/10 border border-red-500/20 text-red-400"
-              }`}>
-                <span>{uploadStatus.type === "success" ? "✓" : "✕"}</span>
-                <span>{uploadStatus.msg}</span>
+            {/* Error box */}
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
+                <p className="text-red-400 text-sm">{error}</p>
               </div>
             )}
 
-            {/* Uploaded images grid */}
+            {/* Images grid */}
             {images.length > 0 && (
               <div className="grid grid-cols-3 gap-2">
-                {images.map((url, i) => (
-                  <div key={url} className="relative aspect-square rounded-xl overflow-hidden group">
-                    <img src={url} alt={`Upload ${i + 1}`} className="w-full h-full object-cover" />
-                    {/* Hero badge */}
-                    {i === 0 && (
-                      <div className="absolute top-1.5 left-1.5 bg-amber-400 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                        COVER
+                {images.map((img, i) => (
+                  <div key={img.localPreview} className="relative aspect-square rounded-xl overflow-hidden bg-[#1a1a1a] border border-[#2a2a2a]">
+                    {/* Preview using local object URL (shows immediately!) */}
+                    <img src={img.localPreview} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+
+                    {/* Uploading overlay */}
+                    {img.uploading && (
+                      <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center gap-1">
+                        <Loader2 size={20} className="animate-spin text-amber-400" />
+                        <span className="text-white text-[9px] font-bold uppercase tracking-wider">Uploading</span>
                       </div>
                     )}
-                    {/* Remove button */}
-                    <button
-                      type="button"
-                      onClick={() => removeImage(i)}
-                      className="absolute top-1.5 right-1.5 w-5 h-5 bg-red-500/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X size={10} className="text-white" />
-                    </button>
-                    <div className="absolute bottom-0 inset-x-0 bg-black/50 text-white text-[9px] text-center py-0.5">
-                      {i + 1}
-                    </div>
+
+                    {/* Error overlay */}
+                    {img.error && !img.uploading && (
+                      <div className="absolute inset-0 bg-red-900/80 flex flex-col items-center justify-center gap-1 p-1">
+                        <span className="text-red-300 text-[9px] font-bold uppercase text-center">Failed</span>
+                        <button type="button" onClick={() => removeImage(img.localPreview)}
+                          className="bg-red-500 text-white text-[9px] px-2 py-0.5 rounded-full font-bold mt-1">
+                          Remove
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Success state */}
+                    {!img.uploading && !img.error && (
+                      <>
+                        {i === 0 && (
+                          <div className="absolute top-1.5 left-1.5 bg-amber-400 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                            COVER
+                          </div>
+                        )}
+                        <div className="absolute top-1.5 right-1.5 bg-emerald-500/90 rounded-full w-4 h-4 flex items-center justify-center">
+                          <span className="text-white text-[8px] font-bold">✓</span>
+                        </div>
+                        <button type="button" onClick={() => removeImage(img.localPreview)}
+                          className="absolute bottom-1.5 right-1.5 w-5 h-5 bg-red-500/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <X size={10} className="text-white" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 ))}
+
                 {/* Add more tile */}
-                <button
-                  type="button"
-                  onClick={() => fileRef.current?.click()}
-                  disabled={uploadingImage}
-                  className="aspect-square rounded-xl border-2 border-dashed border-[#2a2a2a] flex flex-col items-center justify-center gap-1 hover:border-amber-400/40 transition-colors"
-                >
-                  {uploadingImage ? (
-                    <Loader2 size={18} className="animate-spin text-amber-400" />
-                  ) : (
-                    <>
-                      <Plus size={18} className="text-neutral-600" />
-                      <span className="text-neutral-600 text-[9px] font-bold uppercase">Add</span>
-                    </>
-                  )}
+                <button type="button" onClick={() => fileRef.current?.click()}
+                  className="aspect-square rounded-xl border-2 border-dashed border-[#2a2a2a] flex flex-col items-center justify-center gap-1 hover:border-amber-400/40 active:bg-[#1a1a1a] transition-colors">
+                  <Plus size={20} className="text-neutral-500" />
+                  <span className="text-neutral-600 text-[9px] font-bold uppercase">Add More</span>
                 </button>
               </div>
             )}
 
-            {/* Initial upload area (shown when no images yet) */}
+            {/* Initial upload button (when no images yet) */}
             {images.length === 0 && (
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                disabled={uploadingImage}
-                className="w-full bg-[#1a1a1a] border-2 border-dashed border-[#2a2a2a] rounded-2xl min-h-[180px] flex flex-col items-center justify-center gap-2 hover:border-amber-400/30 transition-colors"
-              >
-                {uploadingImage ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="animate-spin text-amber-400" size={24} />
-                    <p className="text-neutral-400 text-xs font-semibold uppercase tracking-wider">UPLOADING...</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <span className="text-4xl">📷</span>
-                    <p className="text-neutral-400 text-xs font-semibold uppercase tracking-wider">TAP TO ADD PHOTOS</p>
-                    <p className="text-neutral-600 text-[10px]">Select multiple images at once</p>
-                  </div>
-                )}
+              <button type="button" onClick={() => fileRef.current?.click()}
+                className="w-full bg-[#1a1a1a] border-2 border-dashed border-[#2a2a2a] rounded-2xl min-h-[200px] flex flex-col items-center justify-center gap-3 hover:border-amber-400/30 active:bg-[#222] transition-colors cursor-pointer">
+                <div className="w-14 h-14 rounded-2xl bg-[#2a2a2a] flex items-center justify-center">
+                  <ImageIcon size={26} className="text-neutral-500" />
+                </div>
+                <div className="text-center">
+                  <p className="text-neutral-300 text-sm font-semibold">Tap to Add Photos</p>
+                  <p className="text-neutral-600 text-xs mt-0.5">Select one or multiple images</p>
+                </div>
               </button>
             )}
 
-            <input
-              ref={fileRef}
-              type="file"
+            {/* Overall uploading indicator */}
+            {isUploading && (
+              <div className="flex items-center gap-2 bg-amber-400/10 border border-amber-400/20 rounded-xl px-4 py-3">
+                <Loader2 size={14} className="animate-spin text-amber-400" />
+                <p className="text-amber-400 text-xs font-semibold">Uploading images to server...</p>
+              </div>
+            )}
+
+            <input ref={fileRef} type="file"
               accept="image/jpeg,image/png,image/webp,image/avif"
-              multiple
-              className="hidden"
-              onChange={handleImageUpload}
-            />
+              multiple className="hidden" onChange={handleImageUpload} />
           </div>
         </StepSection>
 
@@ -335,18 +360,14 @@ export default function ListVenuePage() {
         <StepSection number="04" label="CONTACT GATEWAY">
           <div>
             <label className="text-[#BFC8CA] text-[10px] font-bold uppercase tracking-widest block mb-2">
-              WHATSAPP NUMBER <span className="text-neutral-600">ℹ</span>
+              WHATSAPP NUMBER
             </label>
             <div className="flex items-center gap-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-3 py-3">
               <Phone size={14} className="text-[#BFC8CA] shrink-0" />
               <span className="text-neutral-400 text-sm">+91</span>
-              <input
-                type="tel"
-                value={form.whatsapp}
-                onChange={(e) => update("whatsapp", e.target.value)}
+              <input type="tel" value={form.whatsapp} onChange={(e) => update("whatsapp", e.target.value)}
                 placeholder="98765 43210"
-                className="bg-transparent text-white text-sm outline-none flex-1 placeholder:text-neutral-600"
-              />
+                className="bg-transparent text-white text-sm outline-none flex-1 placeholder:text-neutral-600" />
             </div>
             <p className="text-emerald-400 text-xs mt-1.5 flex items-center gap-1">
               <span>✓</span> Direct booking link will be sent to this number.
@@ -354,29 +375,14 @@ export default function ListVenuePage() {
           </div>
         </StepSection>
 
-        {/* Error */}
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 mb-4">
-            <p className="text-red-400 text-sm">{error}</p>
-          </div>
-        )}
-
         {/* Submit */}
         <div className="mt-6 space-y-3 pb-8">
-          <button
-            type="button"
-            onClick={() => handleSubmit("live")}
-            disabled={submitting}
-            className="w-full py-4 bg-amber-400 hover:bg-amber-500 active:bg-amber-600 text-black font-bold rounded-2xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
-          >
-            {submitting ? <><Loader2 size={18} className="animate-spin" /> Submitting...</> : "SUBMIT AUDITORIUM DETAILS"}
+          <button type="button" onClick={() => handleSubmit("live")} disabled={submitting || isUploading}
+            className="w-full py-4 bg-amber-400 hover:bg-amber-500 active:bg-amber-600 text-black font-bold rounded-2xl transition-colors flex items-center justify-center gap-2 disabled:opacity-60">
+            {submitting ? <><Loader2 size={18} className="animate-spin" /> Submitting...</> : isUploading ? <><Loader2 size={18} className="animate-spin" /> Wait for uploads...</> : "SUBMIT AUDITORIUM DETAILS"}
           </button>
-          <button
-            type="button"
-            onClick={() => handleSubmit("draft")}
-            disabled={submitting}
-            className="w-full py-4 bg-transparent border border-[#2a2a2a] text-neutral-400 font-bold rounded-2xl hover:bg-[#1a1a1a] transition-colors disabled:opacity-60"
-          >
+          <button type="button" onClick={() => handleSubmit("draft")} disabled={submitting || isUploading}
+            className="w-full py-4 bg-transparent border border-[#2a2a2a] text-neutral-400 font-bold rounded-2xl hover:bg-[#1a1a1a] transition-colors disabled:opacity-60">
             SAVE AS DRAFT
           </button>
         </div>
