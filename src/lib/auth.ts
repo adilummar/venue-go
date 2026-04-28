@@ -59,7 +59,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           const existingUser = await getUserByEmail(user.email);
           if (!existingUser) {
-            let role = "customer";
+            let role: "customer" | "owner" = "customer";
             try {
               const cookieStore = await cookies();
               const intendedRole = cookieStore.get("intended_role")?.value;
