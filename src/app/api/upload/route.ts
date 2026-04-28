@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { v2 as cloudinary } from "cloudinary";
-import type { UploadApiResponse, UploadApiErrorResponse } from "cloudinary";
 import { auth } from "@/lib/auth";
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import fs from "fs/promises";
+import path from "path";
+import crypto from "crypto";
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
@@ -43,31 +38,28 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const result = await new Promise<{ secure_url: string; public_id: string }>(
-      (resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream(
-            {
-              folder: "venuego/venues",
-              resource_type: "image",
-              transformation: [{ quality: "auto", fetch_format: "auto" }],
-            },
-            (error: UploadApiErrorResponse | undefined, result: UploadApiResponse | undefined) => {
-              if (error || !result) reject(error);
-              else resolve(result as { secure_url: string; public_id: string });
-            }
-          )
-          .end(buffer);
-      }
-    );
+    // Create unique filename
+    const ext = file.name.split('.').pop() || 'jpg';
+    const filename = `${crypto.randomUUID()}.${ext}`;
+    
+    // Save to public/uploads/venues
+    const uploadDir = path.join(process.cwd(), "public", "uploads", "venues");
+    
+    // Ensure directory exists
+    await fs.mkdir(uploadDir, { recursive: true });
+    
+    const filePath = path.join(uploadDir, filename);
+    await fs.writeFile(filePath, buffer);
+
+    // Return the URL path
+    const fileUrl = `/uploads/venues/${filename}`;
 
     return NextResponse.json(
-      { data: { url: result.secure_url, publicId: result.public_id }, error: null },
+      { data: { url: fileUrl, publicId: filename }, error: null },
       { status: 200 }
     );
   } catch (err: any) {
     console.error("[POST /api/upload]", err);
-    const message = err?.message || err?.error?.message || "Upload failed. Please check Cloudinary configuration.";
-    return NextResponse.json({ data: null, error: message }, { status: 500 });
+    return NextResponse.json({ data: null, error: "Failed to save file to local server disk" }, { status: 500 });
   }
 }
