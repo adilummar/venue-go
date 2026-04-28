@@ -51,12 +51,14 @@ export async function PATCH(
       );
     }
 
-    const { pricePerEvening, ...rest } = parsed.data;
+    const { pricePerEvening, images, ...rest } = parsed.data;
     const updateData = {
       ...rest,
       ...(pricePerEvening !== undefined ? { pricePerEvening: pricePerEvening.toString() } : {}),
+      // Auto-set heroImageUrl to first image in array
+      ...(images && images.length > 0 ? { heroImageUrl: images[0] } : {}),
     };
-    const updated = await updateVenue(id, updateData);
+    const updated = await updateVenue(id, updateData, images);
     return NextResponse.json({ data: updated, error: null }, { status: 200 });
   } catch (err) {
     console.error("[PATCH /api/venues/[id]]", err);

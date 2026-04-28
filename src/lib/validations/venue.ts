@@ -29,7 +29,9 @@ export const createVenueSchema = z.object({
   pricePerEvening: z.coerce
     .number()
     .positive("Price must be a positive number"),
-  heroImageUrl: z.string().url().optional(),
+  heroImageUrl: z.string().optional(),
+  // Array of image URLs/local paths like /uploads/venues/xxx.jpg
+  images: z.array(z.string()).optional(),
   whatsapp: z
     .string()
     .regex(/^\+?91\d{10}$/, "Enter a valid Indian WhatsApp number (+91XXXXXXXXXX)")

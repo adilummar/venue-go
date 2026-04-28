@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, CheckCircle, Phone } from "lucide-react";
+import { Loader2, CheckCircle, Phone, X, Plus } from "lucide-react";
 import { AMENITIES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -21,11 +21,12 @@ interface VenueEditFormProps {
   };
   ownerWhatsapp?: string | null;
   selectedAmenityIds: number[];
+  existingImages?: string[];
 }
 
-export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds }: VenueEditFormProps) {
+export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds, existingImages = [] }: VenueEditFormProps) {
   const router = useRouter();
-  const heroFileRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -41,45 +42,47 @@ export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds }: Venu
     seatingCapacity: String(venue.seatingCapacity),
     pricePerEvening: venue.pricePerEvening,
     whatsapp: ownerWhatsapp ?? "",
-    heroImageUrl: venue.heroImageUrl ?? "",
   });
 
+  // Initialise with existing images; if none fall back to heroImageUrl
+  const initImages = existingImages.length > 0
+    ? existingImages
+    : venue.heroImageUrl ? [venue.heroImageUrl] : [];
+  const [images, setImages] = useState<string[]>(initImages);
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    e.target.value = "";
 
-    if (!["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type)) {
-      setError("Format not supported. Please upload a JPEG, PNG, WEBP, or AVIF image.");
-      return;
-    }
+    for (const file of Array.from(files)) {
+      if (!["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type)) {
+        setError(`"${file.name}" is not a supported format. Use JPEG, PNG, WEBP, or AVIF.`);
+        continue;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setError(`"${file.name}" exceeds 5MB. Please compress it first.`);
+        continue;
+      }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError("File size exceeded. Please upload an image smaller than 5MB.");
-      return;
-    }
-
-    setUploadingImage(true);
-    setError("");
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Upload failed");
-
-      setForm((f) => ({ ...f, heroImageUrl: data.data.url }));
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to upload image");
-    } finally {
-      setUploadingImage(false);
+      setUploadingImage(true);
+      setError("");
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Upload failed");
+        setImages((prev) => [...prev, data.data.url]);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to upload image");
+      } finally {
+        setUploadingImage(false);
+      }
     }
   };
+
+  const removeImage = (index: number) => setImages((prev) => prev.filter((_, i) => i !== index));
 
   const update = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
   const toggleAmenity = (id: number) =>
@@ -105,7 +108,8 @@ export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds }: Venu
           seatingCapacity: Number(form.seatingCapacity),
           pricePerEvening: Number(form.pricePerEvening),
           whatsapp: form.whatsapp || undefined,
-          heroImageUrl: form.heroImageUrl || undefined,
+          heroImageUrl: images[0] || undefined,
+          images: images.length > 0 ? images : undefined,
           amenityIds: amenities,
           status,
         }),
@@ -151,40 +155,84 @@ export function VenueEditForm({ venue, ownerWhatsapp, selectedAmenityIds }: Venu
         </div>
       </section>
 
-      {/* Gallery */}
+      {/* Gallery — Multi-upload */}
       <section>
         <p className="text-amber-400 font-bold text-xs uppercase tracking-widest mb-3">02 GALLERY & VISUALS</p>
-        <button
-          type="button"
-          onClick={() => heroFileRef.current?.click()}
-          disabled={uploadingImage}
-          className="w-full bg-[#1a1a1a] border border-dashed border-[#2a2a2a] rounded-2xl py-10 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-[#3a3a3a] transition-colors relative overflow-hidden group min-h-[200px]"
-        >
-          {form.heroImageUrl && (
-            <div className="absolute inset-0 w-full h-full">
-              <img src={form.heroImageUrl} alt="Hero Preview" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center">
-                 <span className="text-white text-2xl mb-2">📷</span>
-                 <p className="text-white text-xs font-semibold uppercase tracking-wider">CLICK TO CHANGE IMAGE</p>
+
+        {/* Instructions */}
+        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-4 py-3 space-y-1 mb-3">
+          <p className="text-neutral-400 text-xs font-semibold">📋 IMAGE REQUIREMENTS</p>
+          <p className="text-neutral-500 text-[11px]">• Formats: JPEG, PNG, WEBP, AVIF  •  Max 5MB each</p>
+          <p className="text-neutral-500 text-[11px]">• Recommended resolution: 1920×1080</p>
+          <p className="text-neutral-500 text-[11px]">• First image becomes the cover / hero photo</p>
+        </div>
+
+        {/* Images grid */}
+        {images.length > 0 ? (
+          <div className="grid grid-cols-3 gap-2">
+            {images.map((url, i) => (
+              <div key={url} className="relative aspect-square rounded-xl overflow-hidden group">
+                <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                {i === 0 && (
+                  <div className="absolute top-1.5 left-1.5 bg-amber-400 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                    COVER
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeImage(i)}
+                  className="absolute top-1.5 right-1.5 w-5 h-5 bg-red-500/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X size={10} className="text-white" />
+                </button>
+                <div className="absolute bottom-0 inset-x-0 bg-black/50 text-white text-[9px] text-center py-0.5">
+                  {i + 1}
+                </div>
               </div>
-            </div>
-          )}
-          
-          {uploadingImage ? (
-            <div className="relative z-10 flex flex-col items-center bg-[#1a1a1a]/80 p-4 rounded-xl">
-              <Loader2 className="animate-spin text-amber-400 mb-2" size={24} />
-              <p className="text-neutral-200 text-xs font-semibold uppercase tracking-wider">UPLOADING...</p>
-            </div>
-          ) : !form.heroImageUrl && (
-            <div className="relative z-10 flex flex-col items-center">
-              <span className="text-neutral-600 text-3xl mb-2">📷</span>
-              <p className="text-neutral-400 text-xs font-semibold uppercase tracking-wider">UPLOAD HERO IMAGE</p>
-              <p className="text-neutral-500 text-xs text-center px-6 mt-2">Recommended: 1920x1080 (High Resolution)</p>
-              <p className="text-neutral-600 text-[10px] text-center px-6 mt-1">Formats: JPEG, PNG, WEBP, AVIF (Max 5MB)</p>
-            </div>
-          )}
-        </button>
-        <input ref={heroFileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+            ))}
+            {/* Add more tile */}
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploadingImage}
+              className="aspect-square rounded-xl border-2 border-dashed border-[#2a2a2a] flex flex-col items-center justify-center gap-1 hover:border-amber-400/40 transition-colors"
+            >
+              {uploadingImage
+                ? <Loader2 size={18} className="animate-spin text-amber-400" />
+                : <><Plus size={18} className="text-neutral-600" /><span className="text-neutral-600 text-[9px] font-bold uppercase">Add</span></>
+              }
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploadingImage}
+            className="w-full bg-[#1a1a1a] border-2 border-dashed border-[#2a2a2a] rounded-2xl min-h-[160px] flex flex-col items-center justify-center gap-2 hover:border-amber-400/30 transition-colors"
+          >
+            {uploadingImage ? (
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="animate-spin text-amber-400" size={24} />
+                <p className="text-neutral-400 text-xs font-semibold uppercase tracking-wider">UPLOADING...</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-3xl">📷</span>
+                <p className="text-neutral-400 text-xs font-semibold uppercase tracking-wider">TAP TO ADD PHOTOS</p>
+                <p className="text-neutral-600 text-[10px]">Select multiple images at once</p>
+              </div>
+            )}
+          </button>
+        )}
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/avif"
+          multiple
+          className="hidden"
+          onChange={handleImageUpload}
+        />
       </section>
 
       {/* Amenities */}

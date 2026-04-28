@@ -20,20 +20,37 @@ export const PhotoGallery = ({ images }: PhotoGalleryProps) => {
         src={images[current] ?? "/placeholder-venue.jpg"}
         alt={`Venue photo ${current + 1}`}
         fill
-        className="object-cover"
+        className="object-cover transition-opacity duration-300"
         priority
         sizes="100vw"
       />
       {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/70" />
 
-      {/* Counter */}
+      {/* Counter pill */}
       <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1">
         <span className="text-xs text-neutral-400">🖼️</span>
         <span className="text-white text-xs font-semibold">
           {current + 1}/{images.length}
         </span>
       </div>
+
+      {/* Dot indicators (shown when multiple images) */}
+      {images.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+          {images.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`rounded-full transition-all duration-300 ${
+                i === current
+                  ? "w-4 h-1.5 bg-white"
+                  : "w-1.5 h-1.5 bg-white/40"
+              }`}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Nav buttons */}
       {images.length > 1 && (

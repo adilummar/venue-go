@@ -130,17 +130,54 @@ export async function getVenueBySlug(slug: string) {
   return venue[0] ?? null;
 }
 
-export async function createVenue(data: typeof venues.$inferInsert) {
+export async function createVenue(
+  data: typeof venues.$inferInsert,
+  images?: string[]
+) {
   const result = await db.insert(venues).values(data).returning();
-  return result[0];
+  const venue = result[0];
+
+  // Save all images to venue_images table
+  if (images && images.length > 0) {
+    await db.insert(venueImages).values(
+      images.map((url, i) => ({
+        venueId: venue.id,
+        url,
+        isHero: i === 0,
+        position: i,
+      }))
+    );
+  }
+
+  return venue;
 }
 
-export async function updateVenue(id: string, data: Partial<typeof venues.$inferInsert>) {
+export async function updateVenue(
+  id: string,
+  data: Partial<typeof venues.$inferInsert>,
+  images?: string[]
+) {
   const result = await db
     .update(venues)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(venues.id, id))
     .returning();
+
+  // Replace images if a new array was provided
+  if (images !== undefined) {
+    await db.delete(venueImages).where(eq(venueImages.venueId, id));
+    if (images.length > 0) {
+      await db.insert(venueImages).values(
+        images.map((url, i) => ({
+          venueId: id,
+          url,
+          isHero: i === 0,
+          position: i,
+        }))
+      );
+    }
+  }
+
   return result[0];
 }
 

@@ -28,6 +28,7 @@ export default async function VenueEditPage({ params }: PageProps) {
 
   const owner = await resolveSessionUser(session.user);
   const amenityIds = (venue.amenities ?? []).map((a) => (a as { id: number }).id);
+  const existingImages = (venue.images ?? []).map((img: { url: string }) => img.url);
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] pb-12">
@@ -55,6 +56,7 @@ export default async function VenueEditPage({ params }: PageProps) {
           }}
           ownerWhatsapp={owner?.whatsapp}
           selectedAmenityIds={amenityIds}
+          existingImages={existingImages}
         />
       </div>
     </div>

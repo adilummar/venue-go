@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { amenityIds, whatsapp, pricePerEvening, status, ...venueData } = parsed.data;
+    const { amenityIds, whatsapp, pricePerEvening, status, images, ...venueData } = parsed.data;
     const slug = generateSlug(venueData.name);
 
     // Save WhatsApp to owner profile if provided
@@ -56,13 +56,18 @@ export async function POST(request: NextRequest) {
       await updateUser(session.user.id, { whatsapp }).catch(() => {});
     }
 
-    const venue = await createVenue({
-      ...venueData,
-      pricePerEvening: pricePerEvening.toString(),
-      slug,
-      ownerId: session.user.id,
-      status: (status ?? "pending_review") as "draft" | "pending_review" | "live" | "archived",
-    });
+    const venue = await createVenue(
+      {
+        ...venueData,
+        pricePerEvening: pricePerEvening.toString(),
+        slug,
+        ownerId: session.user.id,
+        // First image becomes heroImageUrl
+        heroImageUrl: images?.[0] ?? venueData.heroImageUrl,
+        status: (status ?? "pending_review") as "draft" | "pending_review" | "live" | "archived",
+      },
+      images
+    );
 
     return NextResponse.json({ data: venue, error: null }, { status: 201 });
   } catch (err) {
