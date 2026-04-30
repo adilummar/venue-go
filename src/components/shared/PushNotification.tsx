@@ -138,6 +138,39 @@ export function NotificationToggle() {
           await sub.unsubscribe();
         }
         setPermission("default");
+      } catch (err) {
+        console.error("[push] Unsubscribe failed:", err);
+      } finally {
+        setLoading(false);
+      }
+    } else if (permission === "default") {
+      // Subscribe
+      setLoading(true);
+      try {
+        const newPerm = await Notification.requestPermission();
+        setPermission(newPerm);
+        if (newPerm === "granted") {
+          const reg = await navigator.serviceWorker.ready;
+          const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+          if (!vapidKey) throw new Error("VAPID key missing");
+
+          const sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidKey).buffer as ArrayBuffer,
+          });
+
+          const subJson = sub.toJSON();
+          await fetch("/api/push/subscribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              endpoint: subJson.endpoint,
+              keys: subJson.keys,
+            }),
+          });
+        }
+      } catch (err) {
+        console.error("[push] Subscribe failed:", err);
       } finally {
         setLoading(false);
       }

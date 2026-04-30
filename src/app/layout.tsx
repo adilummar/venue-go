@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { ServiceWorkerRegistrar } from "@/components/shared/ServiceWorkerRegistrar";
 import { PushPermissionPrompt } from "@/components/shared/PushNotification";
+import { PWAInstallPrompt } from "@/components/shared/PWAInstallPrompt";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -72,6 +73,7 @@ export default function RootLayout({
         <Providers>
           {children}
           <PushPermissionPrompt />
+          <PWAInstallPrompt />
         </Providers>
       </body>
     </html>
